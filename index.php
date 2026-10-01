@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -65,11 +66,12 @@
                 </a>
             </nav>
         </div>
-        
+
         <div class="Bienvenida">
             Bienvenido al sistema de reservas de equipos de laboratorio🙌
         </div>
-        <script src="../Js/index.js"></script>
+        <script src="Js/index.js">
+        </script>
     </main>
 </body>
 

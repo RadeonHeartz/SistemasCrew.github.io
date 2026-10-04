@@ -19,12 +19,10 @@
                 <span>Inicio</span>
             </div>
         </a>
-        <a href="Sites/inventario.html">
-            <div class="NavBox">
-                <img src="Images/inventario.webp" alt="Inventario" width="50" height="50">
-                <span>Inventario</span>
-            </div>
-        </a>
+        <div class="NavBox" id="InventarioNav">
+            <img src="Images/inventario.webp" alt="Inventario" width="50" height="50">
+            <span>Inventario</span>
+        </div>
         <a href="Sites/ingresos.html">
             <div class="NavBox">
                 <img src="Images/Ingresos.webp" alt="Ingresos" width="50" height="50">
@@ -70,7 +68,12 @@
         <div class="Bienvenida">
             Bienvenido al sistema de reservas de equipos de laboratorio🙌
         </div>
+        <div class = "Contenido">
+            
+        </div>
         <script src="Js/index.js">
+        </script>
+        <script src="Js/Inventario.js">
         </script>
     </main>
 </body>

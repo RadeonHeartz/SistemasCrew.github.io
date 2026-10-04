@@ -2,19 +2,24 @@ const PerfilImg = document.getElementById("PerfilImg");
 const PerfilNav = document.getElementById("PerfilNav");
 
 PerfilImg.addEventListener("click", function () {
-    PerfilNav.classList.toggle("mostrar");
+  PerfilNav.classList.toggle("mostrar");
 });
-const API_URL = "http://localhost/ProyectoDesarrolloWeb.github.io/api/admin/Equipos.php";
-async function ObtenerEquipos() {
-    try {
-        const response = await fetch(API_URL, {
-            method: "GET"
-        });
-        const datos = await response.json();
-        console.log("Equipos obtenidos:", datos);
-        return datos;
-    } catch (error) {
-        console.error("Error al conectar con la API:", error);
-    }
+let $ = (doc) => document.querySelector(doc);
+let $$ = (doc) => document.querySelectorAll(doc);
+
+function cargarInventario() {
+  let InventarioNav = $("#InventarioNav");
+
+  InventarioNav.addEventListener("click", function () {
+    fetch("Sites/inventario.html")
+      .then((response) => response.text())
+      .then((html) => {
+        $(".Contenido").innerHTML = html;
+        ObtenerEquipos();
+      })
+      .catch((error) => {
+        console.log("Error al cargar el contenido:", error);
+      });
+  });
 }
-ObtenerEquipos();
+cargarInventario();

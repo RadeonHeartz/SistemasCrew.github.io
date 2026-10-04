@@ -9,6 +9,7 @@ Class Equipo{
         $this->connection = $connection;
         $this->response = $response;
     }
+    //Función para obtener todos los equipos
     function getAll()
     {
         $query = "SELECT * FROM vwEquipo";
@@ -17,6 +18,8 @@ Class Equipo{
         $result = $statement->fetchAll(PDO::FETCH_ASSOC);
         $this->response->success("Equipos obtenidos correctamente", $result, 1);
     }
+
+    //Función para añadir un nuevo equipo
     function add($arrayData){
         $Codigo = $arrayData['codigo'];
         $Categoria = $arrayData['categoria'];
@@ -46,6 +49,8 @@ Class Equipo{
         ]);
         $this->response->success("Equipo agregado correctamente", [], 1);
     }
+
+    //Función para actualizar un equipo
     function update($arrayData){
         $Id_Equipo = $arrayData['id_equipo'];
         $Codigo = $arrayData['codigo'];
@@ -80,4 +85,29 @@ Class Equipo{
             throw new Exception("No se pudo actualizar el equipo");
         }
     }
+
+    //Función para hacer soft delete de un equipo, cambiando su estado a 1 (eliminado)
+   function delete($arrayData){
+    $Codigo_Equipo = $arrayData['Codigo'];
+
+    $query = "UPDATE Equipo 
+              SET Id_Estado_Equipo = 1 
+              WHERE Codigo_Equipo = :Codigo_Equipo";
+
+    $Statement = $this->connection->prepare($query);
+
+    $Statement->execute([
+        'Codigo_Equipo' => $Codigo_Equipo
+    ]);
+
+    if($Statement->rowCount() > 0){
+        $this->response->success(
+            "Equipo eliminado correctamente",
+            [],
+            1
+        );
+    }else{
+        throw new Exception("No se pudo eliminar el equipo");
+    }
+}
 }

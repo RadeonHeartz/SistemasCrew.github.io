@@ -59,15 +59,27 @@ switch($method){
             }
             try {
             $equipo = new Equipo($conection, $response);
-                $equipo->update();
+                $equipo->update($_PUT);
             } catch (\Throwable $th) {
                 $response->error("Error al actualizar el equipo", 2003, 400);
             }
             break;
-    case 'DELETE':
-            try {
-            } catch (\Throwable $th) {
-                $response->error("Error al eliminar el equipo", 2004, 400);
-            }
-            break;
+   case 'DELETE':
+    try {
+        $Codigo = $_GET['Codigo'] ?? null;
+
+        if (empty($Codigo) || trim($Codigo) === '') {
+            $response->error("Faltan datos obligatorios", 2002, 400);
+            die();
+        }
+
+        $equipo = new Equipo($conection, $response);
+        $equipo->delete([
+            'Codigo' => $Codigo
+        ]);
+
+    } catch (\Throwable $th) {
+        $response->error("Error al eliminar el equipo", 2004, 400);
+    }
+    break;
 }

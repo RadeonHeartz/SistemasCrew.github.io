@@ -1,19 +1,3 @@
--- =====================================================================
--- Base de datos: dbSistemasCrew
--- Sistema de control de préstamos de equipo de laboratorio
--- Motor: MySQL 8.0+
---
--- NOTA: Este script aplica las correcciones acordadas sobre el ER original:
---   1) Se fusionaron las dos entidades "Tasa_Multa" en una sola tabla.
---   2. Rol_Permiso ahora tiene PK compuesta (Id_Rol, Id_Permiso).
---   3. Historial incluye Id_Equipo (NULLABLE) para registrar movimientos
---      de equipo que no dependen de un préstamo (alta, cambio de estado, baja).
---   4) Detalle_Prestamo.Id_Estado_Salida / Id_Estado_Retorno quedan
---      referenciando Estado_Equipo.
---   5. Prestamo.Id_Usuario_Autoriza es FK explícita a Usuario (autorizador).
---   6) Persona-Usuario se deja como 1:1 (Id_Persona UNIQUE en Usuario).
--- =====================================================================
-
 DROP DATABASE IF EXISTS dbSistemasCrew;
 CREATE DATABASE dbSistemasCrew
     CHARACTER SET utf8mb4
@@ -24,9 +8,7 @@ USE dbSistemasCrew;
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
--- =====================================================================
--- CATÁLOGOS BASE (sin dependencias)
--- =====================================================================
+--Tablas maestras
 
 CREATE TABLE Persona (
     Id_Persona          INT AUTO_INCREMENT PRIMARY KEY,
@@ -83,15 +65,12 @@ CREATE TABLE Estado_Prestamo (
     nombre_estado          VARCHAR(50)   NOT NULL
 ) ENGINE=InnoDB;
 
--- =====================================================================
--- USUARIOS Y PERMISOS (RBAC)
--- =====================================================================
 
 CREATE TABLE Usuario (
     Id_Usuario           INT AUTO_INCREMENT PRIMARY KEY,
     Id_Persona            INT           NOT NULL,
     Nombre_Usuario        VARCHAR(50)   NOT NULL,
-    Contrasena_Usuario    VARCHAR(255)  NOT NULL,  -- se guarda hasheada (bcrypt/argon2)
+    Contrasena_Usuario    VARCHAR(255)  NOT NULL,  -- se debe hashear (bcrypt/argon2)
     Id_Rol                INT           NOT NULL,
     Id_Estado             INT           NOT NULL,
     CONSTRAINT uq_usuario_persona UNIQUE (Id_Persona),
@@ -125,9 +104,7 @@ CREATE TABLE Rol_Permiso (
         ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- =====================================================================
--- INVENTARIO DE EQUIPO
--- =====================================================================
+
 
 CREATE TABLE Equipo (
     Id_Equipo                INT AUTO_INCREMENT PRIMARY KEY,
@@ -152,13 +129,11 @@ CREATE TABLE Equipo (
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
--- =====================================================================
--- MULTAS
--- =====================================================================
+
 
 CREATE TABLE Tasa_Multa (
     id_tasa        INT AUTO_INCREMENT PRIMARY KEY,
-    Id_Categoria    INT             NULL,   -- NULL = tarifa genérica aplicable a cualquier categoría
+    Id_Categoria    INT             NULL,   -- si es NULL entonces es una tarifa genérica aplicable a cualquier categoría
     dias_min        INT             NOT NULL,
     dias_max        INT             NULL,   -- NULL = sin límite superior (tramo abierto)
     Monto           DECIMAL(10,2)   NOT NULL,
@@ -167,9 +142,6 @@ CREATE TABLE Tasa_Multa (
         ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- =====================================================================
--- PRÉSTAMOS
--- =====================================================================
 
 CREATE TABLE Prestamo (
     Id_Prestamo                   INT AUTO_INCREMENT PRIMARY KEY,
@@ -209,9 +181,6 @@ CREATE TABLE Detalle_Prestamo (
         ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- =====================================================================
--- HISTORIAL DE NEGOCIO Y BITÁCORA TÉCNICA
--- =====================================================================
 
 CREATE TABLE Historial (
     Id_Historial        INT AUTO_INCREMENT PRIMARY KEY,
@@ -233,7 +202,7 @@ CREATE TABLE Bitacora (
     id_bitacora               INT AUTO_INCREMENT PRIMARY KEY,
     fecha_bitacora             DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     usuario_bitacora           VARCHAR(100)  NULL,   -- se guarda como texto para conservar el dato aunque el usuario se elimine
-    accion_bitacora            VARCHAR(50)   NULL,
+    accion_bitacora            TEXT  NULL,
     tabla_afectada_bitacora    VARCHAR(100)  NULL,
     id_Fila_Bitacora           INT           NULL,
     Antes_Bitacora             JSON          NULL,
@@ -251,10 +220,7 @@ inner join Categoria c ON e.Id_Categoria = c.Id_Categoria
 inner join Ubicacion u on e.Id_Ubicacion = u.Id_Ubicacion
 inner join Estado_Equipo eq on e.Id_Estado_Equipo = eq.Id_Estado_Equipo;
 
--- =====================================================================
--- ÍNDICES DE APOYO PARA LOS FILTROS REQUERIDOS
--- (inventario por categoría/estado/ubicación, préstamos pendientes/vencidos)
--- =====================================================================
+
 
 CREATE INDEX idx_equipo_categoria       ON Equipo(Id_Categoria);
 CREATE INDEX idx_equipo_estado          ON Equipo(Id_Estado_Equipo);
@@ -272,6 +238,116 @@ CREATE INDEX idx_historial_prestamo     ON Historial(Id_Prestamo);
 CREATE INDEX idx_historial_equipo       ON Historial(Id_Equipo);
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+--TRIGGERS de auditoría para registrar cambios en la bitácora
+
+--TRIGGERS de la tabla de Equipo
+DELIMITER //
+CREATE TRIGGER BitacoraEquipoNuevo AFTER INSERT  ON Equipo FOR EACH ROW
+BEGIN
+	INSERT INTO Bitacora (usuario_bitacora, accion_bitacora, tabla_afectada_bitacora,
+    id_Fila_Bitacora, Nuevo_Bitacora) VALUES (
+        CURRENT_USER(),
+        CONCAT("Insertado el equipo con código: ", NEW.Codigo_Equipo),
+        "Equipo",
+        NEW.Id_Equipo,
+        JSON_OBJECT(
+            'Id_Equipo', NEW.Id_Equipo,
+            'Codigo_Equipo', NEW.Codigo_Equipo,
+            'Id_Categoria', NEW.Id_Categoria,
+            'Id_Ubicacion', NEW.Id_Ubicacion,
+            'Id_Estado_Equipo', NEW.Id_Estado_Equipo,
+            'Marca_Equipo', NEW.Marca_Equipo,
+            'Modelo_Equipo', NEW.Modelo_Equipo,
+            'Serie_Equipo', NEW.Serie_Equipo,
+            'Descripcion_Equipo', NEW.Descripcion_Equipo,
+            'Imagen_Equipo', NEW.Imagen_Equipo,
+            'Fecha_Registro_Equipo', NEW.Fecha_Registro_Equipo,
+            'Fecha_Baja', NEW.Fecha_Baja
+        )
+    );
+END //
+
+CREATE TRIGGER BitacoraEquipoActualizar AFTER UPDATE ON Equipo FOR EACH ROW
+BEGIN
+	IF(NEW.Id_Estado_Equipo = 1 and OLD.Id_Estado_Equipo <>  NEW.Id_Estado_Equipo)
+    THEN
+		INSERT INTO Bitacora(usuario_bitacora, accion_bitacora, tabla_afectada_bitacora, 
+			id_Fila_Bitacora, Antes_Bitacora, Nuevo_Bitacora)
+        VALUES(
+			CURRENT_USER(),
+            CONCAT("Se eliminó el equipo con código: ", OLD.Codigo_Equipo),
+            "Equipo",
+            OLd.Id_Equipo,
+            JSON_OBJECT(
+            'Id_Equipo', OLD.Id_Equipo,
+            'Codigo_Equipo', OLD.Codigo_Equipo,
+            'Id_Categoria', OLD.Id_Categoria,
+            'Id_Ubicacion', OLD.Id_Ubicacion,
+            'Id_Estado_Equipo', OLD.Id_Estado_Equipo,
+            'Marca_Equipo', OLD.Marca_Equipo,
+            'Modelo_Equipo', OLD.Modelo_Equipo,
+            'Serie_Equipo', OLD.Serie_Equipo,
+            'Descripcion_Equipo', OLD.Descripcion_Equipo,
+            'Imagen_Equipo', OLD.Imagen_Equipo,
+            'Fecha_Registro_Equipo', OLD.Fecha_Registro_Equipo,
+            'Fecha_Baja', OLD.Fecha_Baja
+        ),
+        JSON_OBJECT(
+        'Id_Equipo', NEW.Id_Equipo,
+            'Codigo_Equipo', NEW.Codigo_Equipo,
+            'Id_Categoria', NEW.Id_Categoria,
+            'Id_Ubicacion', NEW.Id_Ubicacion,
+            'Id_Estado_Equipo', NEW.Id_Estado_Equipo,
+            'Marca_Equipo', NEW.Marca_Equipo,
+            'Modelo_Equipo', NEW.Modelo_Equipo,
+            'Serie_Equipo', NEW.Serie_Equipo,
+            'Descripcion_Equipo', NEW.Descripcion_Equipo,
+            'Imagen_Equipo', NEW.Imagen_Equipo,
+            'Fecha_Registro_Equipo', NEW.Fecha_Registro_Equipo,
+            'Fecha_Baja', NEW.Fecha_Baja)
+        );
+	ELSE
+		INSERT INTO Bitacora(usuario_bitacora, accion_bitacora, tabla_afectada_bitacora, 
+			id_Fila_Bitacora, Antes_Bitacora, Nuevo_Bitacora)
+            VALUES(
+				CURRENT_USER(),
+                CONCAT("Se actualizó el equipo con código: ", OLD.Codigo_Equipo),
+                "Equipo",
+                OLD.Id_Equipo,
+                JSON_OBJECT(
+            'Id_Equipo', OLD.Id_Equipo,
+            'Codigo_Equipo', OLD.Codigo_Equipo,
+            'Id_Categoria', OLD.Id_Categoria,
+            'Id_Ubicacion', OLD.Id_Ubicacion,
+            'Id_Estado_Equipo', OLD.Id_Estado_Equipo,
+            'Marca_Equipo', OLD.Marca_Equipo,
+            'Modelo_Equipo', OLD.Modelo_Equipo,
+            'Serie_Equipo', OLD.Serie_Equipo,
+            'Descripcion_Equipo', OLD.Descripcion_Equipo,
+            'Imagen_Equipo', OLD.Imagen_Equipo,
+            'Fecha_Registro_Equipo', OLD.Fecha_Registro_Equipo,
+            'Fecha_Baja', OLD.Fecha_Baja
+        ),
+        JSON_OBJECT(
+        'Id_Equipo', NEW.Id_Equipo,
+            'Codigo_Equipo', NEW.Codigo_Equipo,
+            'Id_Categoria', NEW.Id_Categoria,
+            'Id_Ubicacion', NEW.Id_Ubicacion,
+            'Id_Estado_Equipo', NEW.Id_Estado_Equipo,
+            'Marca_Equipo', NEW.Marca_Equipo,
+            'Modelo_Equipo', NEW.Modelo_Equipo,
+            'Serie_Equipo', NEW.Serie_Equipo,
+            'Descripcion_Equipo', NEW.Descripcion_Equipo,
+            'Imagen_Equipo', NEW.Imagen_Equipo,
+            'Fecha_Registro_Equipo', NEW.Fecha_Registro_Equipo,
+            'Fecha_Baja', NEW.Fecha_Baja)
+            );
+    END IF;
+END //
+DELIMITER ;
+--Fin de Triggers de la tabla de Equipo
+
 
 -- =====================================================================
 -- DATOS SEMILLA MÍNIMOS PARA ARRANCAR EL SISTEMA
@@ -296,3 +372,5 @@ INSERT INTO Modulo (Nombre_Modulo) VALUES
 
 INSERT INTO Accion (Nombre_Accion) VALUES
     ('Crear'), ('Leer'), ('Actualizar'), ('Eliminar'), ('Autorizar');
+
+

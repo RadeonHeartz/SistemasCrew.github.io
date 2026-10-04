@@ -29,7 +29,7 @@ switch($method){
         $descripcion = $_POST['descripcion'] ?? null;
         $imagen = $_POST['imagen'] ?? null;
 
-        if ( empty(trim($codigo)) || empty(trim($categoria)) || empty(trim($ubicacion)) || empty(trim($estado)) || empty(trim($descripcion)) || empty(trim($imagen))) {
+        if ( empty(trim($codigo)) || empty(trim($categoria)) || empty(trim($ubicacion)) || empty(trim($estado)) || empty(trim($descripcion))) {
             $response->error("Faltan datos obligatorios", 2002, 400);
             die();
         }
@@ -38,7 +38,7 @@ switch($method){
             $equipo->add($_POST);
         } catch (\Throwable $th) {
             $response->error("Error al agregar el equipo", 2002, 400);
-            #$response->debug(null, $th);
+            $response->debug(null, $th);
         }
         break;
     case 'PUT':
@@ -53,7 +53,7 @@ switch($method){
             $descripcion = $_PUT['descripcion'] ?? null;
             $imagen = $_PUT['imagen'] ?? null;
 
-            if ( empty(trim($codigo)) || empty(trim($categoria)) || empty(trim($ubicacion)) || empty(trim($estado)) || empty(trim($descripcion)) || empty(trim($imagen))) {
+            if ( empty(trim($codigo)) || empty(trim($categoria)) || empty(trim($ubicacion)) || empty(trim($estado)) || empty(trim($descripcion))) {
             $response->error("Faltan datos obligatorios", 2002, 400);
             die();
             }

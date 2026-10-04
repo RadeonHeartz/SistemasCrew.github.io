@@ -5,20 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="Styles/index.css">
-    <title>Inicio</title>
+    <title>Sistema de Gestión de Equipos de Laboratorio</title>
 </head>
 
 <body>
     <nav class="MenuToggle" id="NavLinks">
+
         <div class="Logo">
             <img id="logoimg" src="Images/logo.webp" alt="Logo" width="50" height="50">
         </div>
-        <a href="Sites/index.html">
-            <div class="NavBox">
-                <img src="Images/inicio.webp" alt="Inicio" width="50" height="50">
-                <span>Inicio</span>
-            </div>
-        </a>
+
+        <div class="NavBox" id="InicioNav">
+            <img src="Images/inicio.webp" alt="Inicio" width="50" height="50">
+            <span>Inicio</span>
+        </div>
+
         <div class="NavBox" id="InventarioNav">
             <img src="Images/inventario.webp" alt="Inventario" width="50" height="50">
             <span>Inventario</span>
@@ -68,8 +69,8 @@
         <div class="Bienvenida">
             Bienvenido al sistema de reservas de equipos de laboratorio🙌
         </div>
-        <div class = "Contenido">
-            
+        <div class="Contenido">
+
         </div>
         <script src="Js/index.js">
         </script>

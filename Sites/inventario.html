@@ -16,4 +16,40 @@
     <tbody>
 
     </tbody>
+
 </table>
+<form method="POST" action="http://localhost/ProyectoDesarrolloWeb.github.io/api/admin/Equipos.php" id="equipoForm">
+    <label for="codigo">Codigo Equipo:</label>
+    <input type="text" id="codigo" name="codigo" required>
+
+    <label for="categoria">Categoria:</label>
+    <select id="categoria" name="categoria" required>
+        <option value="">Seleccione una categoria</option>
+    </select>
+
+    <label for="ubicacion">Ubicación:</label>
+    <select id="ubicacion" name="ubicacion" required>
+        <option value="">Seleccione una ubicación</option>
+    </select>
+
+    <label for="estado">Estado:</label>
+    <select id="estado" name="estado" required>
+        <option value="">Seleccione un estado</option>
+    </select>
+
+    <label for="marca">Marca:</label>
+    <input type="text" id="marca" name="marca" >
+
+    <label for="modelo">Modelo:</label>
+    <input type="text" id="modelo" name="modelo" >
+
+    <label for="serie">Serie:</label>
+    <input type="text" id="serie" name="serie" >
+
+    <label for="descripcion">Descripcion:</label>
+    <textarea id="descripcion" name="descripcion" ></textarea>
+
+    <button type="submit">
+        Agregar Equipo
+    </button>
+</form>

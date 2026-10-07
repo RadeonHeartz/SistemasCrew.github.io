@@ -209,16 +209,26 @@ CREATE TABLE Bitacora (
     Nuevo_Bitacora             JSON          NULL
 ) ENGINE=InnoDB;
 
+CREATE TABLE IndiceEquipos(
+    id_Pagina int primary key AUTO_INCREMENT,
+	Ultimo_id_pagina int NOT NULL
+) ENGINE=InnoDB;
+
+
+
 -- Vistas
-ALTER VIEW vwEquipo AS
-SELECT Codigo_Equipo as Codigo, c.Nombre_Categoria as Categoria,  u.Nombre_Ubicacion AS Ubicacion, 
+CREATE VIEW vwEquipo AS
+SELECT e.Id_Equipo as id, e.Codigo_Equipo as Codigo, c.Nombre_Categoria as Categoria,  
+u.Nombre_Ubicacion AS Ubicacion, 
 eq.Nombre_Estado_Equipo AS Estado, COALESCE(e.Marca_Equipo, 'No Disponible') AS Marca, 
-COALESCE(e.Modelo_Equipo, 'No disponible') AS Modelo, 
-COALESCE(e.Serie_Equipo, 'No disponible') AS Serie,
-coalesce(e.Descripcion_Equipo , 'No disponible') AS Descripcion, e.Fecha_Registro_Equipo, e.Fecha_Baja from Equipo e
+COALESCE(NULLIF(e.Modelo_Equipo, ''), 'No disponible') AS Modelo, 
+COALESCE(NULLIF(e.Serie_Equipo, ''), 'No disponible') AS Serie,
+coalesce(NULLIF(e.Descripcion_Equipo , ''), 'No disponible') AS Descripcion, 
+e.Fecha_Registro_Equipo, e.Fecha_Baja from Equipo e
 inner join Categoria c ON e.Id_Categoria = c.Id_Categoria 
 inner join Ubicacion u on e.Id_Ubicacion = u.Id_Ubicacion
-inner join Estado_Equipo eq on e.Id_Estado_Equipo = eq.Id_Estado_Equipo;
+inner join Estado_Equipo eq on e.Id_Estado_Equipo = eq.Id_Estado_Equipo
+ORDER BY e.Id_Equipo ASC;
 
 
 
@@ -345,6 +355,16 @@ BEGIN
             );
     END IF;
 END //
+
+CREATE TRIGGER IndiceEquipo AFTER INSERT ON Equipo FOR EACH ROW 
+BEGIN
+	DECLARE total INT;
+    SELECT COUNT(*) INTO total FROM Equipo;
+    IF MOD(total,10) = 0 then
+    INSERT Into IndiceEquipo VALUES(NEW.Id_Equipo);
+    END IF;
+END //;
+
 DELIMITER ;
 --Fin de Triggers de la tabla de Equipo
 

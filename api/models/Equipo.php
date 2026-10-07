@@ -11,13 +11,19 @@ class Equipo
         $this->response = $response;
     }
     //Función para obtener todos los equipos
-    function getAll()
+    function getAll($ultimo = 0)
     {
-        $query = "SELECT * FROM vwEquipo";
+        /*$registers = "SELECT COUNT(*) as registros FROM vwEquipo";*/
+        /*$statement2 = $this->connection->prepare($registers);
+        $statement2->execute();
+        $result2 = $statement2->fetchAll(PDO::FETCH_ASSOC);*/
+        $query = "SELECT * FROM vwEquipo where id > :ultimo limit 10";
         $statement = $this->connection->prepare($query);
-        $statement->execute();
+        $statement->execute([
+            'ultimo' => $ultimo
+        ]);
         $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-        $this->response->success("Equipos obtenidos correctamente", $result, 1);
+        $this->response->success("Equipos obtenidos correctamente", $result, 1/*,$result2*/);
     }
 
     //Función para añadir un nuevo equipo
@@ -114,5 +120,4 @@ class Equipo
             throw new Exception("No se pudo eliminar el equipo");
         }
     }
-    
 }

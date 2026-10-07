@@ -11,8 +11,9 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch($method){
     case 'GET':
         try {
+            $ultimoid = $_GET['ultimo'] ?? 0;
             $equipo = new Equipo($conection, $response);
-            $equipo->getAll();
+            $equipo->getAll($ultimoid);
         } catch (\Throwable $th) {
             $response->error("Error al obtener los resultados", 2001, 400);
             #$response->debug(null, $th);

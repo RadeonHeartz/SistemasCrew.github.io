@@ -15,11 +15,11 @@ function cargarInventario() {
       .then((response) => response.text())
       .then((html) => {
         $(".Contenido").innerHTML = html;
-        ObtenerEquipos();
+        TablaPaginada();
         ObtenerCategorias();
         ObtenerUbicaciones();
         ObtenerEstadosEquipo();
-        cargarsubmitt();
+        cargarModal();
         document.title = "Inventario";
       })
       .catch((error) => {

@@ -214,6 +214,7 @@ CREATE TABLE IndiceEquipos(
 	Ultimo_id_pagina int NOT NULL
 ) ENGINE=InnoDB;
 
+INSERT INTO IndiceEquipos(Ultimo_id_pagina) VALUES(0);
 
 
 -- Vistas

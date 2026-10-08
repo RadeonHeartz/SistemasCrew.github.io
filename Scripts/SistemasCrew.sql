@@ -8,7 +8,7 @@ USE dbSistemasCrew;
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
---Tablas maestras
+-- Tablas maestras
 
 CREATE TABLE Persona (
     Id_Persona          INT AUTO_INCREMENT PRIMARY KEY,
@@ -362,12 +362,12 @@ BEGIN
 	DECLARE total INT;
     SELECT COUNT(*) INTO total FROM Equipo;
     IF MOD(total,10) = 0 then
-    INSERT Into IndiceEquipo VALUES(NEW.Id_Equipo);
+    INSERT Into IndiceEquipos (Ultimo_id_pagina) VALUES(NEW.Id_Equipo);
     END IF;
 END //;
 
 DELIMITER ;
---Fin de Triggers de la tabla de Equipo
+-- Fin de Triggers de la tabla de Equipo
 
 
 -- =====================================================================
